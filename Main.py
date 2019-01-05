@@ -36,36 +36,50 @@ class GUI(wx.Frame):
         vbox = wx.BoxSizer(wx.VERTICAL)
 
         #URL Textbox
-        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
-        st1 = wx.StaticText(panel, label='URL:')
-        st1.SetFont(font)
-        hbox1.Add(st1, flag=wx.RIGHT, border=8)
-        self.tc = wx.TextCtrl(panel)
-        hbox1.Add(self.tc, proportion=1)
-        vbox.Add(hbox1, flag=wx.EXPAND|wx.ALL, border=10)
+        hboxURL = wx.BoxSizer(wx.HORIZONTAL)
+        staticTextURL = wx.StaticText(panel, label='URL:')
+        staticTextURL.SetFont(font)
+        hboxURL.Add(staticTextURL, flag=wx.RIGHT, border=8)
+        self.textControlURL = wx.TextCtrl(panel)
+        hboxURL.Add(self.textControlURL, proportion=1)
+        vbox.Add(hboxURL, flag=wx.EXPAND|wx.ALL, border=10)
+
+        #Chapter Selection
+        hboxChapter = wx.BoxSizer(wx.HORIZONTAL)
+        startText = wx.StaticText(panel, label='Start Chapter:')
+        startText.SetFont(font)
+        hboxChapter.Add(startText, flag=wx.RIGHT, border=8)
+        self.startChapter = wx.TextCtrl(panel, size=(50,24))
+        hboxChapter.Add(self.startChapter, proportion=1)
+        endText = wx.StaticText(panel, label='Ending Chapter:')
+        endText.SetFont(font)
+        hboxChapter.Add(endText, flag=wx.RIGHT|wx.LEFT, border=8)
+        self.endChapter = wx.TextCtrl(panel, size=(50,24))
+        hboxChapter.Add(self.endChapter, proportion=1)
+        vbox.Add(hboxChapter, flag=wx.EXPAND|wx.ALL, border=10)
 
         #Button
-        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
+        hboxButton = wx.BoxSizer(wx.HORIZONTAL)
         processButton = wx.Button(panel, id=wx.ID_ANY, label='Go', size=(70, 30))
-        hbox2.Add(processButton, flag=wx.RIGHT, border=5)
-        vbox.Add(hbox2, flag=wx.LEFT|wx.BOTTOM, border=5)
+        hboxButton.Add(processButton, flag=wx.RIGHT, border=5)
+        vbox.Add(hboxButton, flag=wx.LEFT|wx.BOTTOM, border=5)
         self.Bind(wx.EVT_BUTTON, self.OnProcess, id=processButton.GetId())
 
         #Textbox
-        hbox3 = wx.BoxSizer(wx.HORIZONTAL)
-        self.st2 = wx.StaticText(panel, label='Test', style=wx.ALIGN_LEFT)
-        self.st2.SetFont(font)
-        hbox3.Add(self.st2, flag=wx.ALL, border=10)
-        vbox.Add(hbox3, flag=wx.ALL, border=5)
+        hboxText = wx.BoxSizer(wx.HORIZONTAL)
+        self.staticTextBox = wx.StaticText(panel, label='Test', style=wx.ALIGN_LEFT)
+        self.staticTextBox.SetFont(font)
+        hboxText.Add(self.staticTextBox, flag=wx.ALL, border=10)
+        vbox.Add(hboxText, flag=wx.ALL, border=5)
 
         panel.SetSizer(vbox)
 
     def OnProcess(self, event):
         
         #Get Page data
-        page = requests.get(self.tc.GetValue())
+        page = requests.get(self.textControlURL.GetValue())
         soup = BeautifulSoup(page.content, 'html.parser')
-        self.st2.SetLabel(str(page.status_code))
+        self.staticTextBox.SetLabel(str(page.status_code))
 
     def OnQuit(self, e):
         
