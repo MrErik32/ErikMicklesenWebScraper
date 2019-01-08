@@ -50,12 +50,12 @@ class GUI(wx.Frame):
         startText.SetFont(font)
         hboxChapter.Add(startText, flag=wx.RIGHT, border=8)
         self.startChapter = wx.TextCtrl(panel, size=(50,24))
-        hboxChapter.Add(self.startChapter, proportion=1)
+        hboxChapter.Add(self.startChapter, proportion=0)
         endText = wx.StaticText(panel, label='Ending Chapter:')
         endText.SetFont(font)
         hboxChapter.Add(endText, flag=wx.RIGHT|wx.LEFT, border=8)
         self.endChapter = wx.TextCtrl(panel, size=(50,24))
-        hboxChapter.Add(self.endChapter, proportion=1)
+        hboxChapter.Add(self.endChapter, proportion=0)
         vbox.Add(hboxChapter, flag=wx.EXPAND|wx.ALL, border=10)
 
         #Button
@@ -80,6 +80,12 @@ class GUI(wx.Frame):
         page = requests.get(self.textControlURL.GetValue())
         soup = BeautifulSoup(page.content, 'html.parser')
         self.staticTextBox.SetLabel(str(page.status_code))
+        #I/O
+        file = open("C:\\Users\\Mr-Erik\\Desktop\\Test.txt", "xt")
+        
+        for link in soup.find_all('a'):
+            file.write(link.get('href'))
+            file.write('\n')
 
     def OnQuit(self, e):
         
