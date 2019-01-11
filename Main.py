@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import wx
+import os
 
 #Menu ID's
 APP_EXIT = 1
@@ -80,10 +81,19 @@ class GUI(wx.Frame):
         page = requests.get(self.textControlURL.GetValue())
         soup = BeautifulSoup(page.content, 'html.parser')
         self.staticTextBox.SetLabel(str(page.status_code))
+
+        #Generate File Name
+        file_name = soup.find('')
+        #Delete Old File If Exists
+        desktop = os.path.expanduser("~/Desktop/Test.txt")
+        if os.path.exists(desktop):
+            os.remove(desktop)
         #I/O
-        file = open("C:\\Users\\Mr-Erik\\Desktop\\Test.txt", "xt")
-        
-        for link in soup.find_all('a'):
+        file = open(desktop, "xt")
+
+        links = soup.find(id='accordion')
+
+        for link in links.find_all('a'):
             file.write(link.get('href'))
             file.write('\n')
 
