@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import wx
 import os
+import re
 
 #Menu ID's
 APP_EXIT = 1
@@ -83,19 +84,23 @@ class GUI(wx.Frame):
         self.staticTextBox.SetLabel(str(page.status_code))
 
         #Generate File Name
-        file_name = soup.find('')
+        file_name = "Test.txt"
+        file_name = soup.find('h4').get_text() + '.txt.'
         #Delete Old File If Exists
-        desktop = os.path.expanduser("~/Desktop/Test.txt")
-        if os.path.exists(desktop):
-            os.remove(desktop)
+        desktop = os.path.expanduser("~/Desktop")
+        #desktop + '/' + file_name
+        if os.path.exists(f"{desktop}/{file_name}"):
+            os.remove(f"{desktop}/{file_name}")
         #I/O
-        file = open(desktop, "xt")
+        file = open(f"{desktop}/{file_name}", "xt")
 
         links = soup.find(id='accordion')
 
+        start = f"-{self.startChapter.GetValue()}"
+
         for link in links.find_all('a'):
-            file.write(link.get('href'))
-            file.write('\n')
+            if re.search(f"{start}$",link.get('href')):
+                file.write(link.get('href'))
 
     def OnQuit(self, e):
         
