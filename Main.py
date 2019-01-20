@@ -69,9 +69,9 @@ class GUI(wx.Frame):
 
         #Textbox
         hboxText = wx.BoxSizer(wx.HORIZONTAL)
-        self.staticTextBox = wx.StaticText(panel, label='Test', style=wx.ALIGN_LEFT)
-        self.staticTextBox.SetFont(font)
-        hboxText.Add(self.staticTextBox, flag=wx.ALL, border=10)
+        self.statusTextBox = wx.StaticText(panel, label='Test', style=wx.ALIGN_LEFT)
+        self.statusTextBox.SetFont(font)
+        hboxText.Add(self.statusTextBox, flag=wx.ALL, border=10)
         vbox.Add(hboxText, flag=wx.ALL, border=5)
 
         panel.SetSizer(vbox)
@@ -79,28 +79,38 @@ class GUI(wx.Frame):
     def OnProcess(self, event):
         
         #Get Page data
-        page = requests.get(self.textControlURL.GetValue())
-        soup = BeautifulSoup(page.content, 'html.parser')
-        self.staticTextBox.SetLabel(str(page.status_code))
+        url = self.textControlURL.GetValue()
+        page = requests.get(url)
+        soup = BeautifulSoup(page.content, 'lxml')
+        self.statusTextBox.SetLabel("Finished Loading")
 
         #Generate File Name
-        file_name = "Test.txt"
-        file_name = soup.find('h4').get_text() + '.txt.'
+        file_name = f"{soup.find('h4').get_text()} chapter {self.startChapter.GetValue()} - chapter {self.endChapter.GetValue()}.txt"
         #Delete Old File If Exists
         desktop = os.path.expanduser("~/Desktop")
         #desktop + '/' + file_name
         if os.path.exists(f"{desktop}/{file_name}"):
             os.remove(f"{desktop}/{file_name}")
         #I/O
-        file = open(f"{desktop}/{file_name}", "xt")
+        file = open(f"{desktop}/{file_name}", "xt", encoding="utf-8")
 
+        #Find start chapter
         links = soup.find(id='accordion')
 
-        start = f"-{self.startChapter.GetValue()}"
+        #Find first specified chapter link
+        start = f"chapter-{self.startChapter.GetValue()}"
+        startLink = None
 
         for link in links.find_all('a'):
             if re.search(f"{start}$",link.get('href')):
-                file.write(link.get('href'))
+                startLink = 'https://www.wuxiaworld.com'+link.get('href')
+        
+        #Process first page of content
+        page = requests.get(startLink)
+        soup = soup = BeautifulSoup(page.content, 'lxml')
+        pageText = soup.find('div', {'class' :'fr-view'})
+        for p in pageText.find_all('p'):
+            file.write(p.text+'\n')
 
     def OnQuit(self, e):
         

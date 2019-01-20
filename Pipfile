@@ -10,6 +10,7 @@ pylint = "*"
 requests = "*"
 beautifulsoup4 = "*"
 wxpython = "*"
+lxml = "*"
 
 [requires]
 python_version = "3.7"
