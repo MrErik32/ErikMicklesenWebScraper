@@ -3,13 +3,13 @@ from bs4 import BeautifulSoup
 import wx
 import os
 import re
+from ebooklib import epub
 
 #Menu ID's
 APP_EXIT = 1
 
 #GUI Setup
 class GUI(wx.Frame):
-
     def __init__(self, parent, title):
         
         super(GUI, self).__init__(parent, title=title)
@@ -18,7 +18,6 @@ class GUI(wx.Frame):
         self.Centre()
 
     def InitUI(self):
-        
         #MenuBar
         menubar = wx.MenuBar()
         fileMenu = wx.Menu()
@@ -77,47 +76,60 @@ class GUI(wx.Frame):
         panel.SetSizer(vbox)
 
     def OnProcess(self, event):
-        
         #Get Page data
         url = self.textControlURL.GetValue()
         page = requests.get(url)
         soup = BeautifulSoup(page.content, 'lxml')
         self.statusTextBox.SetLabel("Finished Loading")
 
-        #Generate File Name
-        file_name = f"{soup.find('h4').get_text()} chapter {self.startChapter.GetValue()} - chapter {self.endChapter.GetValue()}.txt"
+        #Generate ePub
+        titleName = f"{soup.find('h4').get_text()} chapter {self.startChapter.GetValue()} - chapter {self.endChapter.GetValue()}"
         #Delete Old File If Exists
         desktop = os.path.expanduser("~/Desktop")
-        #desktop + '/' + file_name
-        if os.path.exists(f"{desktop}/{file_name}"):
-            os.remove(f"{desktop}/{file_name}")
+        #desktop + '/' + titleName
+        if os.path.exists(f"{desktop}/{titleName}"):
+            os.remove(f"{desktop}/{titleName}")
         #I/O
-        file = open(f"{desktop}/{file_name}", "xt", encoding="utf-8")
+        #book = open(f"{desktop}/{titleName}", "xt", encoding="utf-8")
+        book = epub.EpubBook()
+        book.set_identifier(titleName)
+        book.set_title(titleName)
+        book.set_language('en')
 
         #Find start chapter
         links = soup.find(id='accordion')
 
         #Find first specified chapter link
-        start = f"chapter-{self.startChapter.GetValue()}"
-        startLink = None
+        startLink = 'https://www.wuxiaworld.com'
 
         for link in links.find_all('a'):
-            if re.search(f"{start}$",link.get('href')):
-                startLink = 'https://www.wuxiaworld.com'+link.get('href')
+            if re.search(f"chapter-{self.startChapter.GetValue()}$",link.get('href')):
+                startLink += link.get('href')
         
         #Process first page of content
         page = requests.get(startLink)
         soup = soup = BeautifulSoup(page.content, 'lxml')
         pageText = soup.find('div', {'class' :'fr-view'})
-        for p in pageText.find_all('p'):
-            file.write(p.text+'\n')
+
+        #Chapter Contents
+        chapter = epub.EpubHtml(title='Chapter'+self.startChapter.GetValue(), file_name='Chapter'+self.startChapter.GetValue()+'.xhtml')
+        chapter.set_content('<h1>About this book</h1><p>This is a book.</p>')
+        book.add_item(chapter)
+        #Add NCX and Navigation Title and then Write book to Desktop
+        book.add_item(epub.EpubNcx())
+        book.add_item(epub.EpubNav())
+        epub.write_epub(f"{desktop}/{titleName}.epub", book)
+        '''for p in pageText.find_all('p'):
+            #Exclude uneeded lines
+            if re.search('Previous Chapter', p.text):
+                pass
+            else:
+                book.write(str(p)+'\n')'''
 
     def OnQuit(self, e):
-        
         self.Close()
 
 def main():
-    
     app = wx.App()
     frame = GUI(None, title="Wuxia Chapter Scraper")
     frame.Show()
