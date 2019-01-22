@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 import wx
 import os
 import re
-from ebooklib import epub
 
 #Menu ID's
 APP_EXIT = 1
@@ -83,48 +82,46 @@ class GUI(wx.Frame):
         self.statusTextBox.SetLabel("Finished Loading")
 
         #Generate ePub
-        titleName = f"{soup.find('h4').get_text()} chapter {self.startChapter.GetValue()} - chapter {self.endChapter.GetValue()}"
+        seriesName = soup.find('h4').get_text()
+        startingChapter = self.startChapter.GetValue()
+        endingChapter = self.endChapter.GetValue()
+        fileName = f"{seriesName} chapter {startingChapter} - chapter {endingChapter}.doc"
         #Delete Old File If Exists
         desktop = os.path.expanduser("~/Desktop")
-        #desktop + '/' + titleName
-        if os.path.exists(f"{desktop}/{titleName}"):
-            os.remove(f"{desktop}/{titleName}")
+        #desktop + '/' + fileName
+        if os.path.exists(f"{desktop}/{fileName}"):
+            os.remove(f"{desktop}/{fileName}")
         #I/O
-        #book = open(f"{desktop}/{titleName}", "xt", encoding="utf-8")
-        book = epub.EpubBook()
-        book.set_identifier(titleName)
-        book.set_title(titleName)
-        book.set_language('en')
+        book = open(f"{desktop}/{fileName}", "xt", encoding="utf-8")
 
         #Find start chapter
         links = soup.find(id='accordion')
 
         #Find first specified chapter link
-        startLink = 'https://www.wuxiaworld.com'
+        currentLink = 'https://www.wuxiaworld.com'
 
         for link in links.find_all('a'):
-            if re.search(f"chapter-{self.startChapter.GetValue()}$",link.get('href')):
-                startLink += link.get('href')
+            if re.search(f"chapter-{startingChapter}$",link.get('href')):
+                currentLink += link.get('href')
         
-        #Process first page of content
-        page = requests.get(startLink)
-        soup = soup = BeautifulSoup(page.content, 'lxml')
-        pageText = soup.find('div', {'class' :'fr-view'})
+        #Begin looping through chapters to grab content
+        for i in range(int(startingChapter), int(endingChapter)+1, 1):
+            page = requests.get(currentLink)
+            soup = BeautifulSoup(page.content, 'lxml')
+            pageText = soup.find("div", class_="fr-view")
 
-        #Chapter Contents
-        chapter = epub.EpubHtml(title='Chapter'+self.startChapter.GetValue(), file_name='Chapter'+self.startChapter.GetValue()+'.xhtml')
-        chapter.set_content('<h1>About this book</h1><p>This is a book.</p>')
-        book.add_item(chapter)
-        #Add NCX and Navigation Title and then Write book to Desktop
-        book.add_item(epub.EpubNcx())
-        book.add_item(epub.EpubNav())
-        epub.write_epub(f"{desktop}/{titleName}.epub", book)
-        '''for p in pageText.find_all('p'):
-            #Exclude uneeded lines
-            if re.search('Previous Chapter', p.text):
-                pass
-            else:
-                book.write(str(p)+'\n')'''
+            for p in pageText.find_all('p'):
+                #Exclude uneeded lines
+                if re.search('Previous Chapter', p.text):
+                    pass
+                else:
+                    book.write(p.text+'\n')
+            
+            #Get next page link
+            list = pageText.find_all("a")
+            for link in list:
+                if re.search("Next Chapter", link.string):
+                    currentLink = 'https://www.wuxiaworld.com' + link.get('href')
 
     def OnQuit(self, e):
         self.Close()
