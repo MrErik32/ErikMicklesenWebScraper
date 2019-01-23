@@ -1,8 +1,9 @@
-import requests
 from bs4 import BeautifulSoup
-import wx
 import os
 import re
+import requests
+import time
+import wx
 
 #Menu ID's
 APP_EXIT = 1
@@ -75,11 +76,11 @@ class GUI(wx.Frame):
         panel.SetSizer(vbox)
 
     def OnProcess(self, event):
+        self.statusTextBox.SetLabel("In Process")
         #Get Page data
         url = self.textControlURL.GetValue()
         page = requests.get(url)
         soup = BeautifulSoup(page.content, 'lxml')
-        self.statusTextBox.SetLabel("Finished Loading")
 
         #Generate ePub
         seriesName = soup.find('h4').get_text()
@@ -106,9 +107,14 @@ class GUI(wx.Frame):
         
         #Begin looping through chapters to grab content
         for i in range(int(startingChapter), int(endingChapter)+1, 1):
+            #Start timer before scraping
+            t0 = time.time()
             page = requests.get(currentLink)
             soup = BeautifulSoup(page.content, 'lxml')
             pageText = soup.find("div", class_="fr-view")
+            #Delay scaling on how long the server took to respond
+            response_delay = time.time() - t0
+            time.sleep(response_delay * 10)
 
             for p in pageText.find_all('p'):
                 #Exclude uneeded lines
@@ -121,7 +127,10 @@ class GUI(wx.Frame):
             list = pageText.find_all("a")
             for link in list:
                 if re.search("Next Chapter", link.string):
-                    currentLink = 'https://www.wuxiaworld.com' + link.get('href')
+                    currentLink = 'https://www.wuxiaworld.com' + link.get('href')            
+        
+        #Set Status to Finished
+        self.statusTextBox.SetLabel("Finished Scraping")
 
     def OnQuit(self, e):
         self.Close()
