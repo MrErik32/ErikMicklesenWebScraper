@@ -8,5 +8,6 @@
       "**/*.pyc": true,
       "**/__pycache__": true
   },
-  "python.pythonPath": "C:\\Users\\Mr-Erik\\.virtualenvs\\ErikMicklesenWebScraper-2D0VUVGU\\Scripts\\python.exe"
+  "python.pythonPath": "C:\\Users\\Mr-Erik\\.virtualenvs\\ErikMicklesenWebScraper-2D0VUVGU\\Scripts\\python.exe",
+  "python.linting.pylintEnabled": true
 }
